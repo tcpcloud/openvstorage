@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+shopt -s nullglob
+
+for conf in /etc/init/ovs-*.conf; do
+    service=$(basename $conf .conf)
+    service $service stop || true
+    rm -f $conf
+    [ -f /etc/init/${service}.override ] && rm -f /etc/init/${service}.override
+done
+
+for conf in /etc/systemd/system/ovs-*.service; do
+    rm -f $conf
+done
+
+[ -x /bin/systemctl ] && systemctl daemon-reload
