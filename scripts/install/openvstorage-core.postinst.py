@@ -27,18 +27,8 @@ def file_write(fn, cts):
     with open(fn, 'w') as the_file:
         the_file.write(cts)
 
-# Disable/stop default services. Will be replaced by upstart scripts
-run_level_regex = '^[KS][0-9]{2}(.*)'
-for service_name in ('rabbitmq-server', 'memcached'):
-    service_configured = True
-    for run_level in range(7):
-        if service_name not in [re.match(run_level_regex, run_entry).groups()[0] for run_entry in os.listdir('/etc/rc{0}.d'.format(run_level)) if re.match(run_level_regex, run_entry)]:
-            service_configured &= False
-    if service_configured is False:
-        check_output('service {0} stop'.format(service_name), shell=True)
-        check_output('update-rc.d {0} disable'.format(service_name), shell=True)
-
 # Cleanup *.pyc files
+# TODO: set owner:group only where it is really needed
 check_output('chown -R ovs:ovs /opt/OpenvStorage', shell=True)
 check_output('find /opt/OpenvStorage -name *.pyc -exec rm -rf {} \;', shell=True)
 

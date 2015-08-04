@@ -1376,7 +1376,7 @@ EOF
                 if rabbitmq_running is True and rabbitmq_pid:
                     client.run('kill {0}'.format(rabbitmq_pid))
                     print('  Process killed, restarting')
-                    client.run('service ovs-rabbitmq start')
+                    client.run('service rabbitmq-server start')
                     client.run('sleep 5;rabbitmqctl set_policy ha-all "^(volumerouter|ovs_.*)$" \'{"ha-mode":"all"}\'')
                     break
 
@@ -1384,7 +1384,7 @@ EOF
         if ovs_rabbitmq_running is True and same_process is True:  # Correct process is running
             pass
         elif rabbitmq_running is True and ovs_rabbitmq_running is False:  # Wrong process is running, must be stopped and correct one started
-            print('  WARNING: an instance of rabbitmq-server is running, this needs to be stopped, ovs-rabbitmq will be started instead')
+            print('  WARNING: an instance of rabbitmq-server is running, this needs to be stopped, rabbitmq-server will be started instead')
             client.run('service rabbitmq-server stop')
             time.sleep(5)
             try:
@@ -1392,9 +1392,9 @@ EOF
                 print('  Process killed')
             except SystemExit:
                 print('  Process already stopped')
-            client.run('service ovs-rabbitmq start')
+            client.run('service rabbitmq-server start')
         elif rabbitmq_running is False and ovs_rabbitmq_running is False:  # Neither running
-            client.run('service ovs-rabbitmq start')
+            client.run('service rabbitmq-server start')
 
     @staticmethod
     def _configure_amqp_to_volumedriver(node_ips):
@@ -2223,7 +2223,7 @@ EOF
                 for item in output[2:]:
                     if 'erlang' in item or 'rabbitmq' in item or 'beam' in item:
                         rabbitmq_running = True
-        output = check_rabbitmq_status('ovs-rabbitmq')
+        output = check_rabbitmq_status('rabbitmq-server')
         if 'stop/waiting' in output:
             pass
         if 'start/running' in output:
