@@ -73,7 +73,7 @@ class SourceCollector(object):
                       'experimental': 'exp'}
         branch_map = {'beta': 'stable',
                       'alpha': 'test',
-                      'unstable': 'master'}
+                      'unstable': '2.2.0'}
 
         filename = '{0}/../settings.cfg'.format(os.path.dirname(os.path.abspath(__file__)))
         settings = RawConfigParser()
@@ -113,7 +113,7 @@ class SourceCollector(object):
         # Update the metadata repo
         print '  Updating metadata'
         SourceCollector._git_checkout_to(path=repo_path_metadata,
-                                         revision='master',
+                                         revision='2.2.0',
                                          settings=settings)
         known_branches = []
         for branch in SourceCollector.run(command='git branch -r',
@@ -131,7 +131,7 @@ class SourceCollector(object):
                                              settings=settings)
 
         # Get parent branches
-        branches = ['master']
+        branches = ['2.2.0']
         if distribution == 'alpha':
             branches.append('test')
         elif distribution == 'beta':
