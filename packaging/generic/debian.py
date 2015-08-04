@@ -35,11 +35,21 @@ class DebianPackager(object):
         raise NotImplementedError('DebianPackager is a static class')
 
     @staticmethod
-    def package(source_metadata):
+    def package(source_metadata, skip_sign=False, sign_key=None, source_only=False):
         """
         Packages a given package.
         """
         distribution, version_string, revision_date = source_metadata
+
+        build_opts = []
+        if skip_sign:
+            build_opts.append('-uc -us')
+        elif sign_key:
+            # TODO: if GPG key is password-protected, signing will fail because
+            # check_output is not interactive
+            build_opts.append('-k"%s"' % sign_key)
+        if source_only:
+            build_opts.append('-S')
 
         filename = '{0}/../settings.cfg'.format(os.path.dirname(os.path.abspath(__file__)))
         settings = RawConfigParser()
@@ -86,7 +96,7 @@ class DebianPackager(object):
                             working_directory='{0}/{1}-{2}/debian'.format(debian_folder, package_name, version_string))
 
         # Build the package
-        SourceCollector.run(command='dpkg-buildpackage',
+        SourceCollector.run(command='dpkg-buildpackage %s' % ' '.join(build_opts),
                             working_directory='{0}/{1}-{2}'.format(debian_folder, package_name, version_string))
 
     @staticmethod
