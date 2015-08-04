@@ -42,9 +42,12 @@ for service_name in ('rabbitmq-server', 'memcached'):
 check_output('chown -R ovs:ovs /opt/OpenvStorage', shell=True)
 check_output('find /opt/OpenvStorage -name *.pyc -exec rm -rf {} \;', shell=True)
 
-# Few logstash cleanups
-check_output('usermod -a -G adm logstash', shell=True)
-check_output('echo manual > /etc/init/logstash-web.override', shell=True)
+# Few logstash cleanups if it's installed
+if os.path.isdir('/etc/logstash'):
+    # TODO: logstash user should be added into adm group by logstash package
+    check_output('usermod -a -G adm logstash', shell=True)
+    if os.path.exists('/etc/init/logstash-web.conf'):
+        check_output('echo manual > /etc/init/logstash-web.override', shell=True)
 
 # Configure logging
 check_output('chmod 755 /opt/OpenvStorage/scripts/system/rotate-storagedriver-logs.sh', shell=True)
