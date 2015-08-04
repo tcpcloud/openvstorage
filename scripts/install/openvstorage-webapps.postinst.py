@@ -68,6 +68,16 @@ for filename in filenames:
         with open(filename, 'w') as changed:
             changed.write(contents)
 
+# Disable default nginx site if it's configured
+if os.path.exists('/etc/nginx/sites-enabled/default'):
+    os.remove('/etc/nginx/sites-enabled/default')
+
+# Setup nginx site
+if not os.path.exists("/etc/nginx/sites-enabled/openvstorage.conf"):
+    check_output("ln -s /etc/nginx/sites-available/openvstorage.conf /etc/nginx/sites-enabled/openvstorage.conf", shell=True)
+if not os.path.exists("/etc/nginx/sites-enabled/openvstorage_ssl.conf"):
+    check_output("ln -s /etc/nginx/sites-available/openvstorage_ssl.conf /etc/nginx/sites-enabled/openvstorage_ssl.conf", shell=True)
+
 # Check conflicts with apache2 running on port 80 (most likely devstack/openstack gui)
 try:
     running = check_output('ps aux | grep apache2 | grep -v grep', shell=True)
@@ -76,3 +86,6 @@ except CalledProcessError:
 if running:
     if os.path.exists('/etc/nginx/sites-enabled/openvstorage.conf'):
         os.remove('/etc/nginx/sites-enabled/openvstorage.conf')
+
+# Restart Nginx
+check_output("service nginx restart", shell=True)
