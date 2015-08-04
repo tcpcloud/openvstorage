@@ -37,6 +37,10 @@ if __name__ == '__main__':
     parser.add_option('-d', '--target', dest='target', default='unstable')
     parser.add_option('-r', '--revision', dest='revision', default=None)
     parser.add_option('-s', '--suffix', dest='suffix', default=None)
+    parser.add_option('--skip-sign', action='store_true', dest='skip_sign', default=False)
+    parser.add_option('-k', dest='sign_key', default=None)
+    parser.add_option('-S', '--source', action='store_true', dest='source_package', default=False)
+    parser.add_option('--skip-upload', action='store_true', dest='skip_upload', default=False)
     options, args = parser.parse_args()
 
     target = options.target
@@ -54,5 +58,11 @@ if __name__ == '__main__':
     if source_metadata is not None:
         # 2. Build & Upload packages
         #    - Debian
-        DebianPackager.package(source_metadata)
-        DebianPackager.upload(source_metadata)
+        DebianPackager.package(
+            source_metadata,
+            skip_sign=options.skip_sign,
+            sign_key=options.sign_key,
+            source_only=options.source_package
+        )
+        if not options.skip_upload:
+            DebianPackager.upload(source_metadata)
