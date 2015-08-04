@@ -30,7 +30,7 @@ class Systemd(object):
     @staticmethod
     def _service_exists(name, client, path):
         if path is None:
-            path = '/lib/systemd/system/'
+            path = '/etc/systemd/system/'
         file_to_check = '{0}{1}.service'.format(path, name)
         return client.file_exists(file_to_check)
 
@@ -77,9 +77,9 @@ class Systemd(object):
             template_file = template_file.replace('<ADDITIONAL_DEPENDENCIES>', dependencies)
 
         if target_name is None:
-            client.file_write('/lib/systemd/system/{0}.service'.format(name), template_file)
+            client.file_write('/etc/systemd/system/{0}.service'.format(name), template_file)
         else:
-            client.file_write('/lib/systemd/system/{0}.service'.format(target_name), template_file)
+            client.file_write('/etc/systemd/system/{0}.service'.format(target_name), template_file)
             name = target_name
 
         try:
@@ -104,7 +104,7 @@ class Systemd(object):
     def remove_service(name, client):
         # remove systemd.service file
         name = Systemd._get_name(name, client)
-        client.file_delete('/lib/systemd/system/{0}.service'.format(name))
+        client.file_delete('/etc/systemd/system/{0}.service'.format(name))
         client.run('systemctl daemon-reload')
 
     @staticmethod
@@ -193,13 +193,13 @@ class Systemd(object):
 
     @staticmethod
     def patch_cinder_volume_conf(name, client):
-        cinder_file = open('/lib/systemd/system/{0}.service'.format(name), 'r')
+        cinder_file = open('/etc/systemd/system/{0}.service'.format(name), 'r')
         contents = cinder_file.read()
         if EXPORT not in contents:
             contents = contents.replace('\nUser=cinder', '\n{}\nUser=cinder'.format(EXPORT))
             cinder_file.close()
-            client.run('chmod 666 /lib/systemd/system/{0}.service'.format(name))
-            cinder_file = open('/lib/systemd/system/{0}.service'.format(name), 'w')
+            client.run('chmod 644 /etc/systemd/system/{0}.service'.format(name))
+            cinder_file = open('/etc/systemd/system/{0}.service'.format(name), 'w')
             cinder_file.write(contents)
         cinder_file.close()
         client.run('systemctl daemon-reload')
@@ -209,12 +209,12 @@ class Systemd(object):
         """
         remove export PYTHONPATH from the systemd service file
         """
-        cinder_file = open('/lib/systemd/system/{0}.service'.format(name), 'r')
+        cinder_file = open('/etc/systemd/system/{0}.service'.format(name), 'r')
         contents = cinder_file.read()
         if EXPORT in contents:
             contents = contents.replace(EXPORT, '')
             cinder_file.close()
-            cinder_file = open('/lib/systemd/system/{0}.service'.format(name), 'w')
+            cinder_file = open('/etc/systemd/system/{0}.service'.format(name), 'w')
             cinder_file.write(contents)
         cinder_file.close()
         client.run('systemctl daemon-reload')
