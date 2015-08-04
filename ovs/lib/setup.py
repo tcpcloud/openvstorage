@@ -1340,11 +1340,11 @@ EOF
             try:
                 client.run('service rabbitmq-server stop')
                 if ovs_rabbitmq_running is True:
-                    ServiceManager.stop_service('ovs-rabbitmq', client) 
+                    ServiceManager.stop_service('rabbitmq-server', client)
             except subprocess.CalledProcessError:
                 print('  Failure stopping the rabbitmq process')
         else:
-            ServiceManager.stop_service('ovs-rabbitmq', client) 
+            ServiceManager.stop_service('rabbitmq-server', client)
 
         client.run('rabbitmq-server -detached 2> /dev/null; sleep 5;')
 
@@ -1371,16 +1371,16 @@ EOF
         if rabbitmq_running is True and same_process is True:
             pass
         elif rabbitmq_running is True and same_process is False:  # Wrong process is running, must be stopped and correct one started
-            print('  WARNING: an instance of rabbitmq-server is running, this needs to be stopped, ovs-rabbitmq will be started instead')
+            print('  WARNING: an instance of rabbitmq-server is running, this needs to be stopped, rabbitmq-server will be started instead')
             client.run('service rabbitmq-server stop')
             time.sleep(5)
             if ovs_rabbitmq_running is False:
-                SetupController._change_service_state(client, 'ovs-rabbitmq', 'start')
+                SetupController._change_service_state(client, 'rabbitmq-server', 'start')
         else:  # Neither is running
-            if ServiceManager.has_service('ovs-rabbitmq', client):
-                SetupController._change_service_state(client, 'ovs-rabbitmq', 'start')
+            if ServiceManager.has_service('rabbitmq-server', client):
+                SetupController._change_service_state(client, 'rabbitmq-server', 'start')
             else:
-                raise RuntimeError('Service ovs-rabbitmq has not been added on node {0}'.format(client.ip))
+                raise RuntimeError('Service rabbitmq-server has not been added on node {0}'.format(client.ip))
 
         client.run('sleep 5;rabbitmqctl set_policy ha-all "^(volumerouter|ovs_.*)$" \'{"ha-mode":"all"}\'')
 
@@ -1768,7 +1768,7 @@ EOF
             client.dir_create(mp)
             if mp not in output:
                 client.run('mount {0}'.format(mp))
-   
+
         client.run('chmod 1777 /var/tmp')
 
     @staticmethod
@@ -2205,9 +2205,9 @@ EOF
                         rabbitmq_pid = 0
                     break
 
-        if ServiceManager.has_service('ovs-rabbitmq', client) and ServiceManager.get_service_status('ovs-rabbitmq', client):
+        if ServiceManager.has_service('rabbitmq-server', client) and ServiceManager.get_service_status('rabbitmq-server', client):
             ovs_rabbitmq_running = True
-            pid = ServiceManager.get_service_pid('ovs-rabbitmq', client)
+            pid = ServiceManager.get_service_pid('rabbitmq-server', client)
         same_process = (rabbitmq_pid == pid)
         return rabbitmq_running, ovs_rabbitmq_running, same_process
 
