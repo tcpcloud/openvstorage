@@ -1437,6 +1437,10 @@ EOF
 
     @staticmethod
     def _configure_logstash(client, cluster_name):
+        if not os.path.isfile('/usr/sbin/logstash'):
+            logger.debug("Logstash is not installed, skipping it's configuration")
+            return False
+
         print 'Configuring logstash'
         logger.info('Configuring logstash')
         SetupController._replace_param_in_config(client=client,
@@ -1447,6 +1451,9 @@ EOF
 
     @staticmethod
     def _configure_avahi(client, cluster_name, node_name, node_type):
+        if not SetupController._avahi_installed():
+            return False
+
         print '\n+++ Announcing service +++\n'
         logger.info('Announcing service')
 
@@ -2114,8 +2121,19 @@ EOF
                     print 'Please confirm by typing "y"'
 
     @staticmethod
+    def _avahi_installed():
+        if os.path.isfile('/usr/sbin/avahi-daemon'):
+            return True
+        return False
+
+    @staticmethod
     def _discover_nodes(client):
         nodes = {}
+
+        if not SetupController._avahi_installed():
+            logger.debug('Avahi daemon is not installed, skipping automatic discovery')
+            return nodes
+
         ipaddresses = client.run("ip a | grep 'inet ' | sed 's/\s\s*/ /g' | cut -d ' ' -f 3 | cut -d '/' -f 1").strip().splitlines()
         ipaddresses = [found_ip.strip() for found_ip in ipaddresses if found_ip.strip() != '127.0.0.1']
         SetupController.host_ips = set(ipaddresses)
