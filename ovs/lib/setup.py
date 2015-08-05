@@ -99,6 +99,8 @@ class SetupController(object):
         print Interactive.boxed_message(['Open vStorage Setup'])
         logger.info('Starting Open vStorage Setup')
 
+        target_auth_method = None
+        target_auth_key = None
         target_password = None
         cluster_name = None
         first_node = True
@@ -126,6 +128,8 @@ class SetupController(object):
             config = RawConfigParser()
             config.read(preconfig)
             ip = config.get('setup', 'target_ip')
+            target_auth_method = config.get('setup', 'target_auth_method')
+            target_auth_key = config.get('setup', 'target_auth_key')
             target_password = config.get('setup', 'target_password')
             cluster_ip = config.get('setup', 'cluster_ip')
             cluster_name = str(config.get('setup', 'cluster_name'))
@@ -157,12 +161,26 @@ class SetupController(object):
 
             if ip is None:
                 ip = '127.0.0.1'
-            if target_password is None:
-                node_string = 'this node' if ip == '127.0.0.1' else ip
-                target_node_password = SetupController._ask_validate_password(ip, node_string=node_string)
+            node_string = 'this node' if ip == '127.0.0.1' else ip
+
+            if target_auth_key is None and target_password is None:
+                if target_auth_method is None:
+                    target_auth_method = Interactive.ask_choice(['password', 'private_key'], 'Select authentication method', default_value='password', sort_choices=False)
+
+                if target_auth_method == 'private_key':
+                    target_auth_key = Interactive.ask_string('Enter private SSH key for {0}'.format(node_string), default_value='/root/.ssh/id_rsa')
+                else:
+                    target_password = Interactive.ask_password('Enter the root password for {0}'.format(node_string))
+            elif target_auth_key:
+                target_auth_method = 'private_key'
+                target_password = None
             else:
-                target_node_password = target_password
-            target_client = SSHClient(ip, username='root', password=target_node_password)
+                target_auth_method = 'password'
+                target_auth_key = None
+
+            target_client = SSHClient(ip, username='root',
+                                      password=target_password,
+                                      private_key=target_auth_key)
             ip_client_map[ip] = target_client
 
             logger.debug('Target client loaded')
@@ -331,8 +349,8 @@ class SetupController(object):
             if not cluster_ip:
                 cluster_ip = Interactive.ask_choice(ipaddresses, 'Select the public ip address of {0}'.format(node_name))
                 ip_client_map.pop(ip)
-                ip_client_map[cluster_ip] = SSHClient(cluster_ip, username='root', password=target_node_password)
-            known_passwords[cluster_ip] = target_node_password
+                ip_client_map[cluster_ip] = SSHClient(cluster_ip, username='root', password=target_password)
+            known_passwords[cluster_ip] = target_password
             if cluster_ip not in nodes:
                 nodes.append(cluster_ip)
             logger.debug('Cluster ip is selected as {0}'.format(cluster_ip))

@@ -44,7 +44,7 @@ class SSHClient(object):
 
     IP_REGEX = re.compile('^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))$')
 
-    def __init__(self, endpoint, username='ovs', password=None):
+    def __init__(self, endpoint, username='ovs', password=None, private_key=None):
         """
         Initializes an SSHClient
         """
@@ -66,6 +66,10 @@ class SSHClient(object):
             raise ValueError('The endpoint parameter should be either an ip address or a StorageRouter')
 
         logging.getLogger('paramiko').setLevel(logging.WARNING)
+        if private_key:
+            self.private_key = paramiko.RSAKey.from_private_key_file(private_key)
+        else:
+            self.private_key = None
         self.client = paramiko.SSHClient()
         self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
@@ -107,7 +111,8 @@ class SSHClient(object):
         if self.is_local is True:
             return
 
-        self.client.connect(self.ip, username=self.username, password=self.password)
+        self.client.connect(self.ip, username=self.username,
+                            password=self.password, pkey=self.private_key)
 
     def _disconnect(self):
         """
