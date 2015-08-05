@@ -17,6 +17,7 @@ Upstart module
 """
 
 from subprocess import CalledProcessError
+import os
 
 
 class Upstart(object):
@@ -37,6 +38,8 @@ class Upstart(object):
         Make sure that for e.g. 'ovs-workers' the given service name can be either 'ovs-workers' as just 'workers'
         """
         if Upstart._service_exists(name, client, path):
+            return name
+        if os.path.exists('/etc/init.d/{0}'.format(name)):
             return name
         name = 'ovs-{0}'.format(name)
         if Upstart._service_exists(name, client, path):
@@ -74,10 +77,10 @@ class Upstart(object):
     def get_service_status(name, client):
         try:
             name = Upstart._get_name(name, client)
-            output = client.run('status {0}'.format(name))
-            if 'start' in output:
+            output = client.run('service {0} status'.format(name))
+            if 'start' in output or 'is running' in output:
                 return True
-            if 'stop' in output:
+            if 'stop' in output or 'not running' in output:
                 return False
             return False
         except CalledProcessError:
@@ -104,7 +107,7 @@ class Upstart(object):
     def start_service(name, client):
         try:
             name = Upstart._get_name(name, client)
-            output = client.run('start {0}'.format(name))
+            output = client.run('service {0} start'.format(name))
         except CalledProcessError as cpe:
             output = cpe.output
         return output
@@ -113,7 +116,7 @@ class Upstart(object):
     def stop_service(name, client):
         try:
             name = Upstart._get_name(name, client)
-            output = client.run('stop {0}'.format(name))
+            output = client.run('service {0} stop'.format(name))
         except CalledProcessError as cpe:
             output = cpe.output
         return output
@@ -122,7 +125,7 @@ class Upstart(object):
     def restart_service(name, client):
         try:
             name = Upstart._get_name(name, client)
-            output = client.run('restart {0}'.format(name))
+            output = client.run('service {0} restart'.format(name))
         except CalledProcessError as cpe:
             output = cpe.output
         return output
