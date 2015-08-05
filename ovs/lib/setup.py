@@ -74,7 +74,7 @@ class SetupController(object):
 
     # Services
     model_services = ['memcached', ARAKOON_OVSDB]
-    master_services = model_services + ['rabbitmq', ARAKOON_VOLDRV]
+    master_services = model_services + ['rabbitmq-server', ARAKOON_VOLDRV]
     extra_node_services = ['workers', 'volumerouter-consumer']
     master_node_services = master_services + ['scheduled-tasks', 'snmp', 'webapp-api', 'nginx',
                                               'volumerouter-consumer'] + extra_node_services
@@ -1181,7 +1181,7 @@ class SetupController(object):
         target_client.run('rabbitmqctl stop; sleep 5;')
 
         # Enable HA for the rabbitMQ queues
-        SetupController._change_service_state(target_client, 'rabbitmq', 'start')
+        SetupController._change_service_state(target_client, 'rabbitmq-server', 'start')
         SetupController._start_rabbitmq_and_check_process(target_client)
         SetupController._configure_amqp_to_volumedriver(ip_client_map)
 
@@ -1269,12 +1269,11 @@ class SetupController(object):
 
         print 'Removing/unconfiguring RabbitMQ'
         logger.debug('Removing/unconfiguring RabbitMQ')
-        if ServiceManager.has_service('rabbitmq', client=target_client):
+        if ServiceManager.has_service('rabbitmq-server', client=target_client):
             target_client.run('rabbitmq-server -detached 2> /dev/null; sleep 5; rabbitmqctl stop_app; sleep 5;')
             target_client.run('rabbitmqctl reset; sleep 5;')
             target_client.run('rabbitmqctl stop; sleep 5;')
-            SetupController._change_service_state(target_client, 'rabbitmq', 'stop')
-            ServiceManager.remove_service('rabbitmq', client=target_client)
+            SetupController._change_service_state(target_client, 'rabbitmq-server', 'stop')
             target_client.file_unlink("/var/lib/rabbitmq/.erlang.cookie")
 
         print 'Removing services'
