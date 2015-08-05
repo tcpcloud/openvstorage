@@ -1435,8 +1435,16 @@ EOF
                         storagedriver_config.save()
 
     @staticmethod
+    def _logstash_installed():
+        if os.path.exists('/usr/sbin/logstash') \
+           or os.path.exists('/usr/bin/logstash') \
+           or os.path.exists('/opt/logstash/bin/logstash'):
+            return True
+        return False
+
+    @staticmethod
     def _configure_logstash(client, cluster_name):
-        if not os.path.isfile('/usr/sbin/logstash'):
+        if not SetupController._logstash_installed():
             logger.debug("Logstash is not installed, skipping it's configuration")
             return False
 
@@ -1497,7 +1505,8 @@ EOF
     def _finalize_setup(client, node_name, node_type, hypervisor_info, unique_id):
         cluster_ip = client.ip
         client.dir_create('/opt/OpenvStorage/webapps/frontend/logging')
-        SetupController._change_service_state(client, 'logstash', 'restart')
+        if SetupController._logstash_installed():
+            SetupController._change_service_state(client, 'logstash', 'restart')
         SetupController._replace_param_in_config(client=client,
                                                  config_file='/opt/OpenvStorage/webapps/frontend/logging/config.js',
                                                  old_value='http://"+window.location.hostname+":9200',
