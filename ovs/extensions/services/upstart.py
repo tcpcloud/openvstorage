@@ -39,7 +39,7 @@ class Upstart(object):
         """
         if Upstart._service_exists(name, client, path):
             return name
-        if os.path.exists('/etc/init.d/{0}'.format(name)):
+        if client.file_exists('/etc/init.d/{0}'.format(name)):
             return name
         name = 'ovs-{0}'.format(name)
         if Upstart._service_exists(name, client, path):
@@ -65,7 +65,7 @@ class Upstart(object):
         upstart_dir = '/etc/init/{0}'
         upstart_conf = '{0}.conf'.format(name)
 
-        if not os.path.exists(template_dir.format(upstart_conf)):
+        if not client.file_exists(template_dir.format(upstart_conf)):
             # Given template doesn't exist so we are problably using system
             # init scripts
             return
