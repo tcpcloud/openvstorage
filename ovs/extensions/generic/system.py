@@ -73,6 +73,11 @@ class System(object):
         """
         Update/add entry for hostname ip in /etc/hosts
         """
+        if ip == '127.0.0.1' or \
+                ip == '::1':
+            # Never update localhost
+            return
+
         import re
 
         contents = client.file_read('/etc/hosts').strip() + '\n'
